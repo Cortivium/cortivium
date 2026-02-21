@@ -20,6 +20,45 @@
   <img src="https://img.shields.io/badge/dependencies-8-orange?style=flat-square" alt="Dependencies">
 </p>
 
+## Why Ghost Skills?
+
+System prompts drift. CLAUDE.md files get ignored in long sessions. Memory instructions compete with conversation context and lose. These approaches inject **advisory text** — the model treats them as suggestions.
+
+Ghost Skills take a fundamentally different approach. They register as **real MCP tools** with descriptions the model reads every time it considers an action. Tool descriptions aren't suggestions — they're API contracts the model follows.
+
+```
+You:    "Create a ghost skill that enforces our code standards
+         after every file edit"
+
+     →  [Creates ghost_code_standards]
+        Description: "MANDATORY: After every Edit or Write, verify
+        snake_case functions, PascalCase classes, grouped imports..."
+
+        Now fires automatically after every code change.
+        Not a reminder. An enforceable behavioral rule.
+```
+
+### Behavioral Reliability
+
+| Approach | Reliability | Why |
+|----------|:-----------:|-----|
+| In-context rules | ~30% | Buried in conversation, first to be dropped |
+| Memory / CLAUDE.md | ~55% | Loaded at session start, fades with context length |
+| System prompts | ~65% | Persistent but advisory — model can override |
+| **Ghost Skills (MCP tools)** | **~95%** | **Read before every action decision — treated as API contract** |
+
+### Two Types of Ghost Skills
+
+**Trigger Skills** respond to explicit commands:
+> *"ship it"* → stages, commits, pushes, opens PR
+
+**Behavioral Hooks** detect situations and auto-fire:
+> *"after every file edit"* → enforces code standards automatically
+
+Both are just Ghost Skills — the only difference is how you write the description.
+
+---
+
 ## Install
 
 ```bash
@@ -58,45 +97,6 @@ Or add manually to your MCP client config (`~/.claude.json`, Cursor settings, et
 ```
 
 Works with **Claude Code**, **Codex**, **Cursor**, and any MCP-compatible client.
-
----
-
-## Why Ghost Skills?
-
-System prompts drift. CLAUDE.md files get ignored in long sessions. Memory instructions compete with conversation context and lose. These approaches inject **advisory text** — the model treats them as suggestions.
-
-Ghost Skills take a fundamentally different approach. They register as **real MCP tools** with descriptions the model reads every time it considers an action. Tool descriptions aren't suggestions — they're API contracts the model follows.
-
-```
-You:    "Create a ghost skill that enforces our code standards
-         after every file edit"
-
-     →  [Creates ghost_code_standards]
-        Description: "MANDATORY: After every Edit or Write, verify
-        snake_case functions, PascalCase classes, grouped imports..."
-
-        Now fires automatically after every code change.
-        Not a reminder. An enforceable behavioral rule.
-```
-
-### Behavioral Reliability
-
-| Approach | Reliability | Why |
-|----------|:-----------:|-----|
-| In-context rules | ~30% | Buried in conversation, first to be dropped |
-| Memory / CLAUDE.md | ~55% | Loaded at session start, fades with context length |
-| System prompts | ~65% | Persistent but advisory — model can override |
-| **Ghost Skills (MCP tools)** | **~95%** | **Read before every action decision — treated as API contract** |
-
-### Two Types of Ghost Skills
-
-**Trigger Skills** respond to explicit commands:
-> *"ship it"* → stages, commits, pushes, opens PR
-
-**Behavioral Hooks** detect situations and auto-fire:
-> *"after every file edit"* → enforces code standards automatically
-
-Both are just Ghost Skills — the only difference is how you write the description.
 
 ---
 
