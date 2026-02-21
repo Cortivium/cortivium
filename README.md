@@ -20,6 +20,45 @@
   <img src="https://img.shields.io/badge/dependencies-8-orange?style=flat-square" alt="Dependencies">
 </p>
 
+## Install
+
+```bash
+git clone https://github.com/Cortivium/cortivium.git
+cd cortivium
+pip install -r requirements.txt
+python server.py
+```
+
+That's it. The server creates the database, runs migrations, generates a secret key, and prints admin credentials on first run. Open `http://localhost:8080/admin/` to log in.
+
+### Connect Your MCP Client
+
+Create an API key in the admin panel, then add Cortivium to your client:
+
+```bash
+# Claude Code
+claude mcp add --transport http --scope user cortivium \
+  https://your-server:8080/ --header "X-API-Key: YOUR_KEY"
+```
+
+Or add manually to your MCP client config (`~/.claude.json`, Cursor settings, etc.):
+
+```json
+{
+  "mcpServers": {
+    "cortivium": {
+      "type": "http",
+      "url": "https://your-server:8080/",
+      "headers": {
+        "X-API-Key": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+Works with **Claude Code**, **Codex**, **Cursor**, and any MCP-compatible client.
+
 ---
 
 ## Why Ghost Skills?
@@ -32,12 +71,12 @@ Ghost Skills take a fundamentally different approach. They register as **real MC
 You:    "Create a ghost skill that enforces our code standards
          after every file edit"
 
-Claude: [Creates ghost_code_standards]
+     →  [Creates ghost_code_standards]
         Description: "MANDATORY: After every Edit or Write, verify
         snake_case functions, PascalCase classes, grouped imports..."
 
-        → Now fires automatically after every code change.
-        → Not a reminder. An enforceable behavioral rule.
+        Now fires automatically after every code change.
+        Not a reminder. An enforceable behavioral rule.
 ```
 
 ### Behavioral Reliability
@@ -58,53 +97,6 @@ Claude: [Creates ghost_code_standards]
 > *"after every file edit"* → enforces code standards automatically
 
 Both are just Ghost Skills — the only difference is how you write the description.
-
----
-
-## Quick Start
-
-```bash
-git clone https://github.com/Cortivium/cortivium.git
-cd cortivium
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-python server.py
-```
-
-On first run, Cortivium will:
-
-1. Create the SQLite database and apply migrations
-2. Generate a secret key and save it to `.env`
-3. Create an admin user and **print the credentials to the console** — save them
-
-Open `http://localhost:8080/admin/` and log in with the generated credentials.
-
-### Connect from Claude Code
-
-Create an API key in the admin panel, then:
-
-```bash
-claude mcp add --transport http --scope user cortivium \
-  https://your-server:8080/ --header "X-API-Key: YOUR_KEY"
-```
-
-Or add manually to `~/.claude.json`:
-
-```json
-{
-  "mcpServers": {
-    "cortivium": {
-      "type": "http",
-      "url": "https://your-server:8080/",
-      "headers": {
-        "X-API-Key": "your-api-key"
-      }
-    }
-  }
-}
-```
-
-Works with **Claude Code**, **Codex**, **Cursor**, and any MCP-compatible client.
 
 ---
 
