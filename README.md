@@ -10,7 +10,7 @@
   <a href="https://cortivium.com">Website</a> &nbsp;&middot;&nbsp;
   <a href="https://cortivium.com/docs/">Documentation</a> &nbsp;&middot;&nbsp;
   <a href="https://cortivium.com/ghost-skills/">Ghost Skills Guide</a> &nbsp;&middot;&nbsp;
-  <a href="#quick-start">Quick Start</a>
+  <a href="mailto:contact@cortivium.com">Contact</a>
 </p>
 
 <p align="center">
