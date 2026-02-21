@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="level">
+    <div class="level-left"><h1 class="title is-3">API Keys</h1></div>
+    <div class="level-right">
+        <button class="button is-primary" onclick="openModal('createKeyModal')">Create New Key</button>
+    </div>
+</div>
+
+{% if message %}
+<div class="notification {{ 'is-success' if message_type == 'success' else 'is-danger' if message_type == 'danger' else 'is-warning' if message_type == 'warning' else 'is-info' }}" id="keyNotification">
+    <button class="delete" onclick="this.parentElement.remove()"></button>
+    {% if 'API Key created:' in message %}
+        <p style="margin-bottom:8px;"><strong>API Key Created</strong> — save it now, it won't be shown again!</p>
+        <div class="field has-addons">
+            <div class="control is-expanded">
+                <input class="input is-small" type="text" id="newKeyValue" readonly value="{{ message.replace('API Key created: ', '').replace(' — save it now, it won\'t be shown again!', '') }}" style="font-family:monospace;background:var(--code-bg) !important;">
+            </div>
+            <div class="control">
+                <button class="button is-small is-primary" onclick="copyKey()">Copy</button>
+            </div>
+        </div>
+    {% else %}
+        {{ message }}
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="box">
+    <table class="table is-fullwidth is-hoverable">
+        <thead><tr><th>Name</th><th>Key Prefix</th>{% if is_admin %}<th>Owner</th>{% endif %}<th>Requests</th><th>Last Used</th><th>Enabled</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for key in keys %}
+        <tr>
+            <td>
+                <strong>{{ key.name }}</strong>
+                {% if key.description %}<br><span class="is-size-7 has-text-grey">{{ key.description }}</span>{% endif %}
+            </td>
+            <td><code>{{ key.key_prefix }}...</code></td>
+            {% if is_admin %}<td>{{ key.owner_email or '' }}</td>{% endif %}
+            <td>{{ format_number(key.total_requests) }}</td>
+            <td>{{ time_ago(key.last_used_at) }}</td>
+            <td>
+                <form method="post" action="{{ bp }}/keys" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="action" value="toggle">
+                    <input type="hidden" name="id" value="{{ key.id }}">
+                    <input type="hidden" name="active" value="{{ 0 if key.is_active else 1 }}">
+                    <label class="toggle">
+                        <input type="checkbox" {{ 'checked' if key.is_active }} onchange="this.form.submit()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </form>
+            </td>
+            <td>
+                <div class="buttons are-small">
+                    <button class="button is-light is-small"
+                        data-id="{{ key.id }}"
+                        data-name="{{ key.name }}"
+                        data-email="{{ key.owner_email or '' }}"
+                        data-description="{{ key.description or '' }}"
+                        data-prefix="{{ key.key_prefix }}"
+                        onclick="editKey(this)">Edit</button>
+                    <form method="post" action="{{ bp }}/keys" style="display:inline" onsubmit="return confirm('Delete this key?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="id" value="{{ key.id }}">
+                        <button type="submit" class="button is-light is-small has-text-danger">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ 7 if is_admin else 6 }}" class="has-text-centered is-size-7">No API keys yet. Create one to get started.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Create Key Modal -->
+<div id="createKeyModal" class="modal">
+    <div class="modal-background"></div>
+    <form method="post" action="{{ bp }}/keys" class="modal-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="action" value="create">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Create New API Key</p>
+            <button type="button" class="delete" aria-label="close" onclick="closeModal('createKeyModal')"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="notification is-warning is-light" style="padding:10px 14px;font-size:13px;">
+                Your API key will only be shown <strong>once</strong> after creation. Make sure to copy it immediately — it cannot be retrieved later.
+            </div>
+            <div class="field">
+                <label class="label">Name *</label>
+                <div class="control">
+                    <input class="input" type="text" name="name" required placeholder="My Application">
+                </div>
+            </div>
+            {% if is_admin %}
+            <div class="field">
+                <label class="label">Owner Email *</label>
+                <div class="control">
+                    <input class="input" type="email" name="email" required placeholder="user@example.com">
+                </div>
+            </div>
+            {% endif %}
+            <div class="field">
+                <label class="label">Description</label>
+                <div class="control">
+                    <textarea class="textarea" name="description" rows="3" placeholder="Optional description..."></textarea>
+                </div>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="submit" class="button is-primary">Create Key</button>
+            <button type="button" class="button is-light" onclick="closeModal('createKeyModal')">Cancel</button>
+        </footer>
+    </form>
+</div>
+
+<!-- Edit Key Modal -->
+<div id="editKeyModal" class="modal">
+    <div class="modal-background"></div>
+    <form method="post" action="{{ bp }}/keys" class="modal-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="action" value="update">
+        <input type="hidden" name="id" id="editKeyId">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Edit API Key</p>
+            <button type="button" class="delete" aria-label="close" onclick="closeModal('editKeyModal')"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="field">
+                <label class="label">Name *</label>
+                <div class="control">
+                    <input class="input" type="text" name="name" id="editKeyName" required>
+                </div>
+            </div>
+            {% if is_admin %}
+            <div class="field">
+                <label class="label">Owner Email *</label>
+                <div class="control">
+                    <input class="input" type="email" name="email" id="editKeyEmail" required>
+                </div>
+            </div>
+            {% endif %}
+            <div class="field">
+                <label class="label">Description</label>
+                <div class="control">
+                    <textarea class="textarea" name="description" id="editKeyDescription" rows="3"></textarea>
+                </div>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="submit" class="button is-primary">Save Changes</button>
+            <button type="button" class="button is-light" onclick="closeModal('editKeyModal')">Cancel</button>
+        </footer>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editKey(el) {
+    document.getElementById('editKeyId').value = el.dataset.id;
+    document.getElementById('editKeyName').value = el.dataset.name;
+    document.getElementById('editKeyEmail').value = el.dataset.email;
+    document.getElementById('editKeyDescription').value = el.dataset.description;
+    openModal('editKeyModal');
+}
+
+function copyKey() {
+    const input = document.getElementById('newKeyValue');
+    if (input) {
+        navigator.clipboard.writeText(input.value).then(() => {
+            const btn = input.parentElement.nextElementSibling.querySelector('button');
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+        });
+    }
+}
+</script>
+{% endblock %}

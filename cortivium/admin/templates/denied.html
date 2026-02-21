@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align:center;padding:80px 20px;">
+    <h1 class="title is-3">Access Denied</h1>
+    <p style="margin-bottom:24px;">You don't have permission to view this page. Contact an administrator if you need access.</p>
+    <a href="{{ bp }}/" class="button is-primary">Go to Dashboard</a>
+    <a href="{{ bp }}/logout" class="button is-light">Logout</a>
+</div>
+{% endblock %}

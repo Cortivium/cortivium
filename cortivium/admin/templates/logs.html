@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:1.5rem;">
+    <h1 class="title is-3" style="margin-bottom:0;">Usage Logs</h1>
+    <span class="tag is-info is-light">{{ format_number(total) }} records</span>
+</div>
+
+<div class="box" style="margin-bottom:20px;">
+    <form method="get" action="{{ bp }}/logs">
+        <div class="field is-grouped is-grouped-multiline is-align-items-flex-end">
+            <div class="control">
+                <label class="label is-small">Key Prefix</label>
+                <input class="input is-small" type="text" name="key" value="{{ filter_key }}" placeholder="e.g. abc123">
+            </div>
+            <div class="control">
+                <label class="label is-small">Tool</label>
+                <div class="select is-small">
+                    <select name="tool">
+                        <option value="">All Tools</option>
+                        {% for t in tools %}
+                        <option value="{{ t.tool_name }}" {{ 'selected' if filter_tool == t.tool_name }}>{{ t.tool_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="control">
+                <label class="label is-small">Status</label>
+                <div class="select is-small">
+                    <select name="status">
+                        <option value="">All</option>
+                        <option value="success" {{ 'selected' if filter_status == 'success' }}>Success</option>
+                        <option value="error" {{ 'selected' if filter_status == 'error' }}>Error</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control">
+                <button type="submit" class="button is-primary is-small">Filter</button>
+            </div>
+            <div class="control">
+                <a href="{{ bp }}/logs" class="button is-light is-small">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="box">
+    <table class="table is-fullwidth is-hoverable">
+        <thead><tr><th>Timestamp</th><th>Key</th><th>Tool</th><th>Plugin</th><th>Status</th><th>Duration</th><th>IP</th></tr></thead>
+        <tbody>
+        {% for log in logs %}
+        <tr>
+            <td title="{{ log.request_timestamp }}">{{ time_ago(log.request_timestamp) }}</td>
+            <td>
+                <code>{{ log.key_prefix }}...</code>
+                <br><span class="is-size-7 has-text-grey">{{ log.key_name }}</span>
+            </td>
+            <td>{{ log.tool_name }}</td>
+            <td>{{ log.plugin_name }}</td>
+            <td>
+                <span class="tag {{ 'is-success' if log.status == 'success' else 'is-danger' }}">{{ log.status }}</span>
+                {% if log.error_message %}<br><span class="is-size-7 has-text-danger">{{ log.error_message[:50] }}...</span>{% endif %}
+            </td>
+            <td>{{ (log.duration_ms|string + 'ms') if log.duration_ms else '-' }}</td>
+            <td><span class="is-size-7">{{ log.client_ip or '-' }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="has-text-centered is-size-7">No logs found</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if total_pages > 1 %}
+    <nav class="pagination is-small is-centered" role="navigation" aria-label="pagination" style="margin-top:20px;">
+        {% if page > 1 %}
+        <a class="pagination-previous" href="{{ bp }}/logs?page={{ page - 1 }}&key={{ filter_key }}&tool={{ filter_tool }}&status={{ filter_status }}">Previous</a>
+        {% else %}
+        <a class="pagination-previous" disabled>Previous</a>
+        {% endif %}
+        {% if page < total_pages %}
+        <a class="pagination-next" href="{{ bp }}/logs?page={{ page + 1 }}&key={{ filter_key }}&tool={{ filter_tool }}&status={{ filter_status }}">Next</a>
+        {% else %}
+        <a class="pagination-next" disabled>Next</a>
+        {% endif %}
+        <ul class="pagination-list">
+            {% for i in range([1, page - 2]|max, [total_pages, page + 2]|min + 1) %}
+            <li><a class="pagination-link {{ 'is-current' if i == page }}" href="{{ bp }}/logs?page={{ i }}&key={{ filter_key }}&tool={{ filter_tool }}&status={{ filter_status }}">{{ i }}</a></li>
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

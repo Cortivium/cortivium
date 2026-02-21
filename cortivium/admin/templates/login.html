@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cortivium Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <link rel="stylesheet" href="/static/css/admin.css?v={{ cache_v }}">
+    <style>
+        body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+        .login-container { width:100%; max-width:400px; padding:20px; }
+        .login-header { text-align:center; margin-bottom:32px; }
+        .login-logo { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:8px; }
+        .login-logo img { height:52px; object-fit:contain; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="box" style="padding:40px;">
+            <div class="login-header">
+                <div class="login-logo">
+                    <img src="/static/img/logo.png" alt="Cortivium" class="logo-img">
+                </div>
+                <p class="has-text-grey">Admin Panel</p>
+            </div>
+
+            {% if error %}
+            <div class="notification is-danger is-light">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="field">
+                    <label class="label">Username</label>
+                    <div class="control">
+                        <input class="input" type="text" name="username" required autocomplete="username" autofocus placeholder="Username">
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Password</label>
+                    <div class="control">
+                        <input class="input" type="password" name="password" required autocomplete="current-password" placeholder="Password">
+                    </div>
+                </div>
+                <div class="field" style="margin-top:24px;">
+                    <button type="submit" class="button is-primary is-fullwidth">Sign In</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</body>
+</html>

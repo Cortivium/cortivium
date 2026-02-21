@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+
+# Environment
+.env
+
+# Storage (runtime data)
+storage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Private plugins (hosted service only)
+cortivium/plugins/video_analyzer/
+
+# Working files
+_working.txt
+*.db
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage

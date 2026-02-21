@@ -1,0 +1,16 @@
+services:
+  cortivium:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - cortivium_storage:/app/storage
+    environment:
+      - CORTIVIUM_HOST=0.0.0.0
+      - CORTIVIUM_PORT=8080
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  cortivium_storage:

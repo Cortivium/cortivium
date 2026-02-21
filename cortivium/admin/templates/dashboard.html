@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="title is-3">Dashboard</h1>
+
+<div class="columns is-multiline">
+    <div class="column is-4-desktop is-6-tablet">
+        <div class="box stat-card purple">
+            <p class="title is-4" style="margin-bottom:4px;">{{ format_number(stats.total_keys) }}</p>
+            <p class="has-text-grey is-size-7" style="text-transform:uppercase;letter-spacing:0.05em;">{{ 'Total API Keys' if is_admin else 'My API Keys' }}</p>
+        </div>
+    </div>
+    <div class="column is-4-desktop is-6-tablet">
+        <div class="box stat-card cyan">
+            <p class="title is-4" style="margin-bottom:4px;">{{ format_number(stats.active_keys) }}</p>
+            <p class="has-text-grey is-size-7" style="text-transform:uppercase;letter-spacing:0.05em;">{{ 'Active Keys' if is_admin else 'My Active Keys' }}</p>
+        </div>
+    </div>
+    <div class="column is-4-desktop is-6-tablet">
+        <div class="box stat-card pink">
+            <p class="title is-4" style="margin-bottom:4px;">{{ format_number(stats.total_requests) }}</p>
+            <p class="has-text-grey is-size-7" style="text-transform:uppercase;letter-spacing:0.05em;">{{ 'Total Requests' if is_admin else 'My Requests' }}</p>
+        </div>
+    </div>
+    <div class="column is-4-desktop is-6-tablet">
+        <div class="box stat-card green">
+            <p class="title is-4" style="margin-bottom:4px;">{{ format_number(stats.requests_today) }}</p>
+            <p class="has-text-grey is-size-7" style="text-transform:uppercase;letter-spacing:0.05em;">Requests Today</p>
+        </div>
+    </div>
+    <div class="column is-4-desktop is-6-tablet">
+        <div class="box stat-card purple">
+            <p class="title is-4" style="margin-bottom:4px;">{{ format_number(stats.requests_this_hour) }}</p>
+            <p class="has-text-grey is-size-7" style="text-transform:uppercase;letter-spacing:0.05em;">Last Hour</p>
+        </div>
+    </div>
+    {% if is_admin %}
+    <div class="column is-4-desktop is-6-tablet">
+        <div class="box stat-card cyan">
+            <p class="title is-4" style="margin-bottom:4px;">{{ format_number(stats.plugins_enabled) }}</p>
+            <p class="has-text-grey is-size-7" style="text-transform:uppercase;letter-spacing:0.05em;">Active Plugins</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="box">
+    <h2 class="title is-5">Recent Activity</h2>
+    <table class="table is-fullwidth is-hoverable is-narrow is-size-7">
+        <thead><tr><th>Time</th><th>Key</th><th>Tool</th><th>Status</th><th>Duration</th></tr></thead>
+        <tbody>
+        {% for log in recent_activity %}
+        <tr>
+            <td>{{ time_ago(log.request_timestamp) }}</td>
+            <td><code>{{ log.key_prefix }}...</code></td>
+            <td>{{ log.tool_name }}</td>
+            <td><span class="tag is-small {{ 'is-success' if log.status == 'success' else 'is-danger' }}">{{ log.status }}</span></td>
+            <td>{{ (log.duration_ms|string + 'ms') if log.duration_ms else '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="has-text-centered">No activity yet</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="box">
+    <h2 class="title is-5">Top Tools (7 days)</h2>
+    <table class="table is-fullwidth is-hoverable is-narrow is-size-7">
+        <thead><tr><th>Tool</th><th>Plugin</th><th>Calls</th><th>Avg Time</th><th>Success</th></tr></thead>
+        <tbody>
+        {% for tool in top_tools %}
+        <tr>
+            <td>{{ tool.tool_name }}</td>
+            <td>{{ tool.plugin_name }}</td>
+            <td>{{ format_number(tool.calls) }}</td>
+            <td>{{ (tool.avg_duration|round|int)|string + 'ms' }}</td>
+            <td>{{ ((tool.successes / tool.calls * 100)|round|int)|string + '%' if tool.calls else '0%' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="has-text-centered">No data yet</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="level">
+    <div class="level-left"><h1 class="title is-3">Ghost Skills</h1></div>
+    <div class="level-right">
+        <button class="button is-primary" onclick="openModal('createModal')">Create New Skill</button>
+    </div>
+</div>
+
+{% if message %}
+<div class="notification {{ 'is-success' if message_type == 'success' else 'is-danger' if message_type == 'danger' else 'is-warning' if message_type == 'warning' else 'is-info' }}">
+    <button class="delete" onclick="this.parentElement.remove()"></button>
+    {{ message }}
+</div>
+{% endif %}
+
+{% if not user_api_keys %}
+<div class="notification is-warning">You don't have any API keys yet. <a href="{{ bp }}/keys">Create an API key</a> first.</div>
+{% else %}
+
+<div class="box" style="margin-bottom:20px;">
+    <form method="get" action="{{ bp }}/skills" class="field is-grouped is-align-items-center">
+        <div class="control">
+            <label class="label is-small" style="margin-bottom:4px;">Filter by API Key</label>
+            <div class="select">
+                <select name="api_key" onchange="this.form.submit()">
+                    <option value="0">All API Keys</option>
+                    {% for key in user_api_keys %}
+                    <option value="{{ key.id }}" {{ 'selected' if selected_key == key.id }}>{{ key.name }} ({{ key.key_prefix }}...)</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="box">
+    <table class="table is-fullwidth is-hoverable">
+        <thead><tr><th>Tool Name</th><th>API Key</th><th>Executions</th><th>Last Used</th><th>Enabled</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for skill in skills %}
+        <tr>
+            <td>
+                <strong>ghost_{{ skill.name }}</strong>
+                <br><span class="is-size-7 has-text-grey">{{ skill.description[:60] }}{{ '...' if skill.description|length > 60 }}</span>
+            </td>
+            <td>
+                <span class="is-size-7">{{ skill.api_key_name }}</span>
+                <br><code style="font-size:11px;">{{ skill.key_prefix }}...</code>
+            </td>
+            <td>{{ format_number(skill.execution_count) }}</td>
+            <td>{{ time_ago(skill.last_executed_at) }}</td>
+            <td>
+                <form method="post" action="{{ bp }}/skills" style="display:inline">
+                    <input type="hidden" name="action" value="toggle">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="id" value="{{ skill.id }}">
+                    <input type="hidden" name="is_enabled" value="{{ 0 if skill.is_enabled else 1 }}">
+                    <label class="toggle">
+                        <input type="checkbox" {{ 'checked' if skill.is_enabled }} onchange="this.form.submit()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </form>
+            </td>
+            <td>
+                <div class="buttons are-small">
+                    <button class="button is-light is-small"
+                        data-id="{{ skill.id }}"
+                        data-name="{{ skill.name }}"
+                        data-description="{{ skill.description or '' }}"
+                        data-instructions="{{ skill.instructions or '' }}"
+                        data-triggers="{{ skill.trigger_phrases or '[]' }}"
+                        onclick="editSkill(this)">Edit</button>
+                    <form method="post" action="{{ bp }}/skills" style="display:inline" onsubmit="return confirm('Delete?')">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="id" value="{{ skill.id }}">
+                        <button type="submit" class="button is-light is-small has-text-danger">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="has-text-centered is-size-7">No ghost skills yet. Create one to get started!</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Create Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-background"></div>
+    <form method="post" action="{{ bp }}/skills" class="modal-card" style="max-width:600px;">
+        <input type="hidden" name="action" value="create">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Create Ghost Skill</p>
+            <button type="button" class="delete" aria-label="close" onclick="closeModal('createModal')"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="notification is-info" style="padding:12px 16px;font-size:13px;">
+                Tip: It's recommended to create skills through natural language using the <code>ghost_create_skill</code> tool — the agent will fill in all fields automatically.
+            </div>
+            <div class="field">
+                <label class="label">API Key *</label>
+                <div class="control">
+                    <div class="select is-fullwidth">
+                        <select name="api_key_id" required>
+                            {% for key in user_api_keys %}
+                            <option value="{{ key.id }}">{{ key.name }} ({{ key.key_prefix }}...)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Skill Name *</label>
+                <div class="control">
+                    <input class="input" type="text" name="name" required placeholder="download_webpage" pattern="[a-z][a-z0-9_]*">
+                </div>
+                <p class="help">Lowercase, underscores. Accessed as <code>ghost_name</code></p>
+            </div>
+            <div class="field">
+                <label class="label">Description *</label>
+                <div class="control">
+                    <input class="input" type="text" name="description" required placeholder="Download a webpage using wget">
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Instructions *</label>
+                <div class="control">
+                    <textarea class="textarea" name="instructions" rows="8" required placeholder="Plain text instructions for the AI..."></textarea>
+                </div>
+                <p class="help">Use <code>{{ '{{param}}' }}</code> for dynamic values.</p>
+            </div>
+            <div class="field">
+                <label class="label">Trigger Phrases</label>
+                <div class="control">
+                    <input class="input" type="text" name="trigger_phrases" placeholder="download webpage, fetch url">
+                </div>
+                <p class="help">Comma-separated. Auto-generated if left empty.</p>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="submit" class="button is-primary">Create Skill</button>
+            <button type="button" class="button is-light" onclick="closeModal('createModal')">Cancel</button>
+        </footer>
+    </form>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-background"></div>
+    <form method="post" action="{{ bp }}/skills" class="modal-card" style="max-width:600px;">
+        <input type="hidden" name="action" value="update">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="id" id="editId">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Edit Skill</p>
+            <button type="button" class="delete" aria-label="close" onclick="closeModal('editModal')"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="field">
+                <label class="label">Tool Name</label>
+                <div class="control">
+                    <input class="input" type="text" id="editName" disabled>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Description *</label>
+                <div class="control">
+                    <input class="input" type="text" name="description" id="editDescription" required>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Instructions *</label>
+                <div class="control">
+                    <textarea class="textarea" name="instructions" id="editInstructions" rows="8"></textarea>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Trigger Phrases</label>
+                <div class="control">
+                    <input class="input" type="text" name="trigger_phrases" id="editTriggerPhrases">
+                </div>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="submit" class="button is-primary">Save Changes</button>
+            <button type="button" class="button is-light" onclick="closeModal('editModal')">Cancel</button>
+        </footer>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editSkill(el) {
+    document.getElementById('editId').value = el.dataset.id;
+    document.getElementById('editName').value = 'ghost_' + el.dataset.name;
+    document.getElementById('editDescription').value = el.dataset.description;
+    document.getElementById('editInstructions').value = el.dataset.instructions;
+    let phrases = [];
+    try { phrases = JSON.parse(el.dataset.triggers || '[]'); } catch(e) {}
+    document.getElementById('editTriggerPhrases').value = phrases.join(', ');
+    openModal('editModal');
+}
+</script>
+{% endblock %}

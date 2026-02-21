@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="title is-3">Plugins</h1>
+
+{% if message %}
+<div class="notification {{ 'is-success' if message_type == 'success' else 'is-danger' if message_type == 'danger' else 'is-warning' if message_type == 'warning' else 'is-info' }}">
+    <button class="delete" onclick="this.parentElement.remove()"></button>
+    {{ message }}
+</div>
+{% endif %}
+
+<div class="box">
+    <table class="table is-fullwidth is-hoverable">
+        <thead><tr><th>Plugin</th><th>Version</th><th>Tools</th><th>Total Calls</th><th>Enabled</th></tr></thead>
+        <tbody>
+        {% for plugin in plugins %}
+        <tr>
+            <td>
+                <strong>{{ plugin.display_name }}</strong>
+                <br><span class="is-size-7 has-text-grey">{{ plugin.name }}</span>
+                {% if plugin.description %}<br><span class="is-size-7">{{ plugin.description }}</span>{% endif %}
+            </td>
+            <td>{{ plugin.version or '1.0.0' }}</td>
+            <td>{{ plugin.tool_count }}</td>
+            <td>{{ format_number(plugin.total_calls) }}</td>
+            <td>
+                <form method="post" action="{{ bp }}/plugins" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="action" value="toggle">
+                    <input type="hidden" name="id" value="{{ plugin.id }}">
+                    <input type="hidden" name="enabled" value="{{ 0 if plugin.is_enabled else 1 }}">
+                    <label class="toggle">
+                        <input type="checkbox" {{ 'checked' if plugin.is_enabled }} onchange="this.form.submit()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="has-text-centered is-size-7">No plugins registered</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

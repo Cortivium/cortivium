@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title + ' - ' if page_title else '' }}Cortivium{{ ' Admin' if is_admin else '' }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <link rel="stylesheet" href="/static/css/admin.css?v={{ cache_v }}">
+</head>
+<body>
+    <!-- Mobile navbar -->
+    <nav class="navbar is-hidden-desktop" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="{{ bp }}/">
+                <img src="/static/img/logo.png" alt="Cortivium" class="logo-img">
+                <strong style="margin-left:10px;color:var(--primary);">Cortivium</strong>
+            </a>
+            <a role="button" class="navbar-burger" data-target="mobileMenu" aria-label="menu" aria-expanded="false">
+                <span></span><span></span><span></span><span></span>
+            </a>
+        </div>
+        <div id="mobileMenu" class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item {{ 'is-active' if page_title == 'Dashboard' }}" href="{{ bp }}/">Dashboard</a>
+                <a class="navbar-item {{ 'is-active' if page_title == 'API Keys' }}" href="{{ bp }}/keys">API Keys</a>
+                <a class="navbar-item {{ 'is-active' if page_title == 'Ghost Skills' }}" href="{{ bp }}/skills">Ghost Skills</a>
+                {% if is_admin %}
+                <a class="navbar-item {{ 'is-active' if page_title == 'Plugins' }}" href="{{ bp }}/plugins">Plugins</a>
+                <hr class="navbar-divider">
+                <a class="navbar-item {{ 'is-active' if page_title == 'Usage Logs' }}" href="{{ bp }}/logs">Usage Logs</a>
+                <a class="navbar-item {{ 'is-active' if page_title == 'Users' }}" href="{{ bp }}/users">Users</a>
+                {% endif %}
+                <hr class="navbar-divider">
+                <a class="navbar-item" href="{{ bp }}/logout">Logout ({{ user.username }})</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar (desktop) -->
+    <aside class="admin-sidebar is-hidden-touch">
+        <div class="sidebar-brand">
+            <a href="{{ bp }}/" style="display:flex;align-items:center;text-decoration:none;">
+                <img src="/static/img/logo.png" alt="Cortivium" class="logo-img">
+            </a>
+        </div>
+        <div class="sidebar-menu">
+            <aside class="menu">
+                <p class="menu-label">General</p>
+                <ul class="menu-list">
+                    <li><a class="{{ 'is-active' if page_title == 'Dashboard' }}" href="{{ bp }}/">Dashboard</a></li>
+                    <li><a class="{{ 'is-active' if page_title == 'API Keys' }}" href="{{ bp }}/keys">API Keys</a></li>
+                    <li><a class="{{ 'is-active' if page_title == 'Ghost Skills' }}" href="{{ bp }}/skills">Ghost Skills</a></li>
+                    {% if is_admin %}
+                    <li><a class="{{ 'is-active' if page_title == 'Plugins' }}" href="{{ bp }}/plugins">Plugins</a></li>
+                    {% endif %}
+                </ul>
+                {% if is_admin %}
+                <p class="menu-label">System</p>
+                <ul class="menu-list">
+                    <li><a class="{{ 'is-active' if page_title == 'Usage Logs' }}" href="{{ bp }}/logs">Usage Logs</a></li>
+                    <li><a class="{{ 'is-active' if page_title == 'Users' }}" href="{{ bp }}/users">Users</a></li>
+                </ul>
+                {% endif %}
+            </aside>
+        </div>
+        <div class="sidebar-footer">
+            <a class="button is-light is-fullwidth is-small" href="{{ bp }}/logout">Logout ({{ user.username }})</a>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="admin-main">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+    // Bulma burger toggle
+    document.addEventListener('DOMContentLoaded', () => {
+        const burger = document.querySelector('.navbar-burger');
+        if (burger) {
+            burger.addEventListener('click', () => {
+                const target = document.getElementById(burger.dataset.target);
+                burger.classList.toggle('is-active');
+                target.classList.toggle('is-active');
+            });
+        }
+    });
+    // Modal helpers
+    function openModal(id) { document.getElementById(id).classList.add('is-active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('is-active'); }
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.modal-background').forEach(bg => {
+            bg.addEventListener('click', () => bg.parentElement.classList.remove('is-active'));
+        });
+    });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

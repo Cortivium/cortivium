@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="level">
+    <div class="level-left"><h1 class="title is-3">Users</h1></div>
+    <div class="level-right">
+        <button class="button is-primary" onclick="openModal('createModal')">Add User</button>
+    </div>
+</div>
+
+{% if message %}
+<div class="notification {{ 'is-success' if message_type == 'success' else 'is-danger' if message_type == 'danger' else 'is-warning' if message_type == 'warning' else 'is-info' }}">
+    <button class="delete" onclick="this.parentElement.remove()"></button>
+    {{ message }}
+</div>
+{% endif %}
+
+<div class="box">
+    <table class="table is-fullwidth is-hoverable">
+        <thead><tr><th>Username</th><th>Email</th><th>Name</th><th>Access Level</th><th>Last Login</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for u in users %}
+        <tr>
+            <td><strong>{{ u.username }}</strong></td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.name or '-' }}</td>
+            <td>
+                <form method="post" action="{{ bp }}/users" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="action" value="update_level">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <select name="access_level" onchange="this.form.submit()" class="level-select level-{{ u.access_level }}" {{ 'disabled' if u.id == user.user_id }}>
+                        <option value="0" {{ 'selected' if u.access_level == 0 }}>Disabled</option>
+                        <option value="1" {{ 'selected' if u.access_level == 1 }}>Pending</option>
+                        <option value="2" {{ 'selected' if u.access_level == 2 }}>User</option>
+                        <option value="3" {{ 'selected' if u.access_level == 3 }}>Admin</option>
+                        <option value="4" {{ 'selected' if u.access_level == 4 }}>Super Admin</option>
+                    </select>
+                </form>
+            </td>
+            <td>{{ time_ago(u.last_login) }}</td>
+            <td>
+                <div class="buttons are-small">
+                    <button class="button is-light is-small"
+                        data-id="{{ u.id }}"
+                        data-username="{{ u.username }}"
+                        data-email="{{ u.email }}"
+                        data-name="{{ u.name or '' }}"
+                        onclick="editUser(this)">Edit</button>
+                    <button class="button is-light is-small" onclick="showPwModal({{ u.id }}, '{{ u.username }}')">Reset Password</button>
+                    {% if u.id != user.user_id %}
+                    <form method="post" action="{{ bp }}/users" style="display:inline;" onsubmit="return confirm('Delete user {{ u.username }}?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                        <button type="submit" class="button is-light is-small has-text-danger">Delete</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Create User Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-background"></div>
+    <form method="post" action="{{ bp }}/users" class="modal-card" style="max-width:600px;">
+        <input type="hidden" name="action" value="create">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Create User</p>
+            <button type="button" class="delete" aria-label="close" onclick="closeModal('createModal')"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="field">
+                <label class="label">Username *</label>
+                <div class="control"><input class="input" type="text" name="username" required></div>
+            </div>
+            <div class="field">
+                <label class="label">Email *</label>
+                <div class="control"><input class="input" type="email" name="email" required></div>
+            </div>
+            <div class="field">
+                <label class="label">Password *</label>
+                <div class="control"><input class="input" type="password" name="password" required minlength="8"></div>
+            </div>
+            <div class="field">
+                <label class="label">Name</label>
+                <div class="control"><input class="input" type="text" name="name"></div>
+            </div>
+            <div class="field">
+                <label class="label">Access Level</label>
+                <div class="control">
+                    <div class="select is-fullwidth">
+                        <select name="access_level">
+                            <option value="1">Pending</option>
+                            <option value="2" selected>User</option>
+                            <option value="3">Admin</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="submit" class="button is-primary">Create User</button>
+            <button type="button" class="button is-light" onclick="closeModal('createModal')">Cancel</button>
+        </footer>
+    </form>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="modal">
+    <div class="modal-background"></div>
+    <form method="post" action="{{ bp }}/users" class="modal-card" style="max-width:600px;">
+        <input type="hidden" name="action" value="update">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="user_id" id="editUserId">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Edit User</p>
+            <button type="button" class="delete" aria-label="close" onclick="closeModal('editUserModal')"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="field">
+                <label class="label">Username *</label>
+                <div class="control"><input class="input" type="text" name="username" id="editUsername" required></div>
+            </div>
+            <div class="field">
+                <label class="label">Email *</label>
+                <div class="control"><input class="input" type="email" name="email" id="editEmail" required></div>
+            </div>
+            <div class="field">
+                <label class="label">Name</label>
+                <div class="control"><input class="input" type="text" name="name" id="editUserName"></div>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="submit" class="button is-primary">Save Changes</button>
+            <button type="button" class="button is-light" onclick="closeModal('editUserModal')">Cancel</button>
+        </footer>
+    </form>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="passwordModal" class="modal">
+    <div class="modal-background"></div>
+    <form method="post" action="{{ bp }}/users" class="modal-card" style="max-width:600px;">
+        <input type="hidden" name="action" value="reset_password">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="user_id" id="pwUserId">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Reset Password</p>
+            <button type="button" class="delete" aria-label="close" onclick="closeModal('passwordModal')"></button>
+        </header>
+        <section class="modal-card-body">
+            <p style="margin-bottom:16px;">Reset password for <strong id="pwUsername"></strong></p>
+            <div class="field">
+                <label class="label">New Password *</label>
+                <div class="control"><input class="input" type="password" name="new_password" required minlength="8"></div>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="submit" class="button is-primary">Reset Password</button>
+            <button type="button" class="button is-light" onclick="closeModal('passwordModal')">Cancel</button>
+        </footer>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editUser(el) {
+    document.getElementById('editUserId').value = el.dataset.id;
+    document.getElementById('editUsername').value = el.dataset.username;
+    document.getElementById('editEmail').value = el.dataset.email;
+    document.getElementById('editUserName').value = el.dataset.name;
+    openModal('editUserModal');
+}
+
+function showPwModal(id, name) {
+    document.getElementById('pwUserId').value = id;
+    document.getElementById('pwUsername').textContent = name;
+    openModal('passwordModal');
+}
+</script>
+{% endblock %}
