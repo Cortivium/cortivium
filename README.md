@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://cortivium.com/cortiviumlatest.png" alt="Cortivium" width="200">
-</p>
-
 <h1 align="center">Cortivium</h1>
 
 <p align="center">
