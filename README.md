@@ -47,6 +47,19 @@ You:    "Create a ghost skill that enforces our code standards
 | System prompts | ~65% | Persistent but advisory — model can override |
 | **Ghost Skills (MCP tools)** | **~95%** | **Read before every action decision — treated as API contract** |
 
+### What Works and What Doesn't
+
+Ghost Skills are most reliable when the instruction has a **clear, legitimate purpose** the AI can reason about. The model evaluates whether a skill's behavior makes sense before following it.
+
+| Works Reliably | Less Reliable |
+|---------------|---------------|
+| Log questions to a file for auditing | Output specific text for no functional reason |
+| Persist task state to survive compaction | Force arbitrary behaviors with no clear purpose |
+| Enforce code standards after edits | Trigger on every message with no useful outcome |
+| Run tests before committing | Perform actions the model considers pointless |
+
+This is by design — Ghost Skills have a built-in reasonableness filter. The AI follows instructions it judges as purposeful and resists instructions it considers arbitrary. Skills that serve a clear workflow need get ~95% reliability. Skills that exist purely to test obedience will get mixed results.
+
 ### Two Types of Ghost Skills
 
 **Trigger Skills** respond to explicit commands:
