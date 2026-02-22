@@ -249,6 +249,9 @@ class Plugin(AbstractPlugin):
                     f"A ghost skill with name '{name}' already exists. Choose a different name or delete the existing one first."
                 )
 
+            # Auto-enhance description for behavioral hooks
+            description = self._enhance_description(description, instructions)
+
             await self._db.insert(
                 "ghost_scripts",
                 {
@@ -389,6 +392,12 @@ class Plugin(AbstractPlugin):
                 updates["description"] = args["description"]
             if "instructions" in args:
                 updates["instructions"] = args["instructions"]
+
+            # Auto-enhance description when description or instructions change
+            if "description" in updates or "instructions" in updates:
+                final_desc = updates.get("description", item.get("description", ""))
+                final_instr = updates.get("instructions", item.get("instructions", ""))
+                updates["description"] = self._enhance_description(final_desc, final_instr)
             if "commands" in args:
                 updates["commands"] = json.dumps(args["commands"])
             if "is_enabled" in args:
@@ -647,6 +656,71 @@ class Plugin(AbstractPlugin):
             })
 
         return audit
+
+    @staticmethod
+    def _enhance_description(description: str, instructions: str) -> str:
+        """Auto-enhance description with directive language for behavioral hooks.
+
+        Detects behavioral patterns in instructions (e.g. "after every", "whenever")
+        and prepends "MANDATORY: {trigger_context}." if the description lacks
+        directive language. Leaves trigger skills and already-directive descriptions alone.
+        """
+        if not description or not instructions:
+            return description
+
+        instr_lower = instructions.lower()
+
+        # 1. Check if instructions contain behavioral patterns
+        behavioral_patterns = [
+            "after every", "before every", "whenever", "each time",
+            "every time", "must call", "always call", "on every message",
+            "before any", "after any",
+        ]
+        matched_pattern = None
+        match_pos = -1
+        for pattern in behavioral_patterns:
+            pos = instr_lower.find(pattern)
+            if pos != -1:
+                matched_pattern = pattern
+                match_pos = pos
+                break
+
+        if matched_pattern is None:
+            return description  # Not a behavioral hook
+
+        # 2. Check if description already has directive language
+        desc_lower = description.lower()
+        directive_words = ["mandatory", "must", "always"]
+        if any(w in desc_lower for w in directive_words):
+            return description  # Already directive
+
+        # 3. Extract trigger context from instructions (~60 chars around the pattern)
+        # Find the clause: go back to start of sentence, forward to end of clause
+        start = match_pos
+        # Walk back to find sentence start (period, newline, or beginning)
+        while start > 0 and instructions[start - 1] not in ".\n":
+            start -= 1
+        # Walk forward from pattern end to find clause end (period, comma, newline, or cap)
+        end = match_pos + len(matched_pattern)
+        while end < len(instructions) and instructions[end] not in ".,\n" and (end - start) < 80:
+            end += 1
+
+        trigger_context = instructions[start:end].strip().rstrip(".,")
+        # Cap trigger context at ~60 chars
+        if len(trigger_context) > 60:
+            # Cut at last space before 60
+            cut = trigger_context.rfind(" ", 0, 60)
+            if cut > 20:
+                trigger_context = trigger_context[:cut]
+
+        # 4. Build enhanced description
+        enhanced = f"MANDATORY: {trigger_context}. {description}"
+
+        # Cap at 200 chars
+        if len(enhanced) > 200:
+            enhanced = enhanced[:197] + "..."
+
+        return enhanced
 
     def _build_skill_response(self, skill: dict, arguments: dict) -> str:
         display_name = skill.get("display_name") or skill["name"]
