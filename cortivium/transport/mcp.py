@@ -64,6 +64,12 @@ async def _authenticate(
     """
     raw_key = request.headers.get("x-api-key", "")
 
+    # Fall back to Authorization: Bearer <key> (for Codex compatibility)
+    if not raw_key:
+        auth_header = request.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            raw_key = auth_header[7:]
+
     if _auth is None:
         return (True, None, None)
 
