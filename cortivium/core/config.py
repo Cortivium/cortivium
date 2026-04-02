@@ -4,7 +4,7 @@ import os
 import secrets
 from pathlib import Path
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -30,11 +30,11 @@ class Settings(BaseSettings):
     ssl_cert: str = ""
     ssl_key: str = ""
 
-    model_config = {
-        "env_prefix": "CORTIVIUM_",
-        "env_file": ".env",
-        "env_file_encoding": "utf-8",
-    }
+    model_config = SettingsConfigDict(
+        env_prefix="CORTIVIUM_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
 
     def ensure_secret_key(self) -> None:
         """Auto-generate secret key if not set, and persist to .env."""
