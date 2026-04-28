@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/cortivium-cortivium-badge.png)](https://mseep.ai/app/cortivium-cortivium)
+
 <h1 align="center">Cortivium</h1>
 
 <p align="center">
